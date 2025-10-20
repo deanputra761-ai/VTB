@@ -1,0 +1,1721 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Body Progress Tracker</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary: #2563EB;
+            --primary-dark: #1D4ED8;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --gray-50: #F8FAFC;
+            --gray-100: #F1F5F9;
+            --gray-200: #E2E8F0;
+            --gray-600: #475569;
+            --gray-800: #1E293B;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 0;
+        }
+
+        .app-container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Auth Screens */
+        .auth-container {
+            display: flex;
+            min-height: 100vh;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .auth-title {
+            text-align: center;
+            margin-bottom: 10px;
+            color: var(--gray-800);
+            font-size: 28px;
+        }
+
+        .auth-subtitle {
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--gray-600);
+        }
+
+        .auth-tabs {
+            display: flex;
+            background: var(--gray-100);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 20px;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--gray-600);
+            transition: all 0.3s ease;
+        }
+
+        .auth-tab.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: var(--shadow);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--gray-800);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid var(--gray-200);
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn {
+            padding: 15px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-google {
+            background: white;
+            color: var(--gray-800);
+            border: 2px solid var(--gray-200);
+        }
+
+        .btn-google:hover {
+            background: var(--gray-50);
+        }
+
+        .divider {
+            text-align: center;
+            margin: 20px 0;
+            color: var(--gray-600);
+            position: relative;
+        }
+
+        .divider::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--gray-200);
+            z-index: 1;
+        }
+
+        .divider span {
+            background: white;
+            padding: 0 15px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Header & Navigation */
+        .app-header {
+            background: white;
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .app-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--gray-800);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--gray-600);
+            font-size: 14px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: var(--gray-100);
+            border-radius: 12px;
+            padding: 4px;
+            flex-wrap: wrap;
+            gap: 2px;
+        }
+
+        .nav-tab {
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            color: var(--gray-600);
+            white-space: nowrap;
+            font-size: 14px;
+        }
+
+        .nav-tab.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: var(--shadow);
+        }
+
+        .logout-btn {
+            background: var(--gray-100);
+            color: var(--gray-600);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .logout-btn:hover {
+            background: var(--gray-200);
+            color: var(--danger);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--gray-200);
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        /* Progress Section */
+        .progress-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        @media (min-width: 768px) {
+            .progress-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        /* Insight Cards */
+        .insight-card {
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+
+        .insight-success {
+            background: #ECFDF5;
+            border-left: 4px solid var(--success);
+        }
+
+        .insight-warning {
+            background: #FFFBEB;
+            border-left: 4px solid var(--warning);
+        }
+
+        .insight-info {
+            background: #EFF6FF;
+            border-left: 4px solid var(--primary);
+        }
+
+        .insight-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .insight-title {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        /* Measurement History */
+        .measurement-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .measurement-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .measurement-date {
+            font-weight: 500;
+            color: var(--gray-800);
+            font-size: 14px;
+        }
+
+        .measurement-values {
+            display: flex;
+            gap: 12px;
+        }
+
+        .measurement-value {
+            text-align: center;
+        }
+
+        .value-number {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .value-label {
+            font-size: 11px;
+            color: var(--gray-600);
+        }
+
+        /* Hidden Class */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Welcome Message */
+        .welcome-message {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--gray-600);
+        }
+
+        /* Workout Schedule */
+        .workout-day {
+            margin-bottom: 20px;
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .workout-header {
+            background: var(--gray-100);
+            padding: 12px 15px;
+            font-weight: 600;
+            color: var(--gray-800);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .workout-body {
+            padding: 15px;
+        }
+
+        .exercise {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .exercise:last-child {
+            margin-bottom: 0;
+            border-bottom: none;
+        }
+
+        .exercise-name {
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--gray-800);
+            font-size: 14px;
+        }
+
+        .exercise-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .exercise-detail {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--gray-600);
+            font-size: 12px;
+        }
+
+        /* Forms */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        @media (min-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        /* Charts */
+        .chart-container {
+            height: 250px;
+            margin-top: 15px;
+        }
+
+        /* Nutrition Log */
+        .nutrition-summary {
+            margin-top: 15px;
+            padding: 12px;
+            background: var(--gray-100);
+            border-radius: 12px;
+        }
+
+        .nutrition-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--gray-200);
+            font-size: 14px;
+        }
+
+        .nutrition-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Backup Section */
+        .backup-actions {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        @media (min-width: 768px) {
+            .backup-actions {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 15px;
+            background: var(--gray-100);
+            border: 2px dashed var(--gray-300);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .file-label:hover {
+            background: var(--gray-200);
+            border-color: var(--primary);
+        }
+
+        .backup-info {
+            margin-top: 15px;
+            padding: 12px;
+            background: var(--gray-50);
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
+            font-size: 14px;
+        }
+
+        .data-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .data-stat {
+            text-align: center;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .stat-number {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--gray-600);
+            margin-top: 4px;
+        }
+
+        /* User List in Login */
+        .user-list {
+            margin-top: 20px;
+            border-top: 1px solid var(--gray-200);
+            padding-top: 15px;
+        }
+
+        .user-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 6px;
+            background: var(--gray-50);
+            border-radius: 8px;
+            border: 1px solid var(--gray-200);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .user-item:hover {
+            background: var(--gray-100);
+            border-color: var(--primary);
+        }
+
+        .user-email {
+            font-weight: 500;
+            color: var(--gray-800);
+            font-size: 14px;
+        }
+
+        .user-data {
+            font-size: 11px;
+            color: var(--gray-600);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .app-header {
+                flex-direction: column;
+                gap: 12px;
+                padding: 12px 15px;
+            }
+            
+            .header-left {
+                flex-direction: column;
+                text-align: center;
+                gap: 8px;
+            }
+            
+            .nav-tabs {
+                width: 100%;
+                justify-content: center;
+                overflow-x: auto;
+            }
+            
+            .main-content {
+                padding: 15px;
+            }
+            
+            .auth-card {
+                padding: 30px 20px;
+            }
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Auth Screens -->
+    <div id="authScreen" class="auth-container">
+        <div class="auth-card">
+            <h1 class="auth-title"><i class="fas fa-chart-line"></i> Body Tracker</h1>
+            <p class="auth-subtitle">Track your fitness journey</p>
+            
+            <div class="auth-tabs">
+                <div class="auth-tab active" onclick="switchAuthTab('login')">Login</div>
+                <div class="auth-tab" onclick="switchAuthTab('register')">Daftar</div>
+            </div>
+
+            <!-- Login Form -->
+            <div id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="loginEmail" class="form-input" placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="loginPassword" class="form-input" placeholder="Password">
+                </div>
+                <button class="btn btn-primary" onclick="login()">
+                    <i class="fas fa-sign-in-alt"></i> Login
+                </button>
+
+                <!-- Existing Users List -->
+                <div class="user-list" id="userList">
+                    <h3 style="margin-bottom: 12px; text-align: center; font-size: 14px;">Akun yang Tersedia</h3>
+                    <!-- Users will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Register Form -->
+            <div id="registerForm" class="hidden">
+                <div class="form-group">
+                    <label class="form-label">Nama Lengkap</label>
+                    <input type="text" id="registerName" class="form-input" placeholder="Nama Anda">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="registerEmail" class="form-input" placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="registerPassword" class="form-input" placeholder="Minimal 6 karakter">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Konfirmasi Password</label>
+                    <input type="password" id="registerConfirmPassword" class="form-input" placeholder="Ulangi password">
+                </div>
+                <button class="btn btn-primary" onclick="register()">
+                    <i class="fas fa-user-plus"></i> Daftar Akun Baru
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="appContainer" class="app-container hidden">
+        <!-- Header -->
+        <div class="app-header">
+            <div class="header-left">
+                <div class="app-title">
+                    <i class="fas fa-chart-line"></i> Body Tracker
+                </div>
+                <div class="user-info">
+                    <i class="fas fa-user"></i>
+                    <span id="currentUserEmail">user@example.com</span>
+                </div>
+            </div>
+            
+            <div class="nav-tabs">
+                <div class="nav-tab active" onclick="switchTab('dashboard')">
+                    <i class="fas fa-home"></i> <span class="tab-text">Dashboard</span>
+                </div>
+                <div class="nav-tab" onclick="switchTab('progress')">
+                    <i class="fas fa-chart-bar"></i> <span class="tab-text">Progress</span>
+                </div>
+                <div class="nav-tab" onclick="switchTab('workout')">
+                    <i class="fas fa-dumbbell"></i> <span class="tab-text">Workout</span>
+                </div>
+                <div class="nav-tab" onclick="switchTab('measurements')">
+                    <i class="fas fa-ruler"></i> <span class="tab-text">Measure</span>
+                </div>
+                <div class="nav-tab" onclick="switchTab('nutrition')">
+                    <i class="fas fa-utensils"></i> <span class="tab-text">Nutrition</span>
+                </div>
+                <div class="nav-tab" onclick="switchTab('backup')">
+                    <i class="fas fa-database"></i> <span class="tab-text">Backup</span>
+                </div>
+            </div>
+
+            <button class="logout-btn" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i> <span class="logout-text">Logout</span>
+            </button>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            
+            <!-- Dashboard Tab -->
+            <div id="dashboardTab" class="tab-content active">
+                <div class="welcome-message">
+                    <h2>Selamat Datang, <span id="userName">User</span>!</h2>
+                    <p>Pantau progress tubuh Anda menuju bentuk ideal</p>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="currentWeight">- kg</div>
+                        <div class="stat-label">Berat Saat Ini</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="vTaperRatio">-</div>
+                        <div class="stat-label">Rasio V-Taper</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="workoutCount">0</div>
+                        <div class="stat-label">Workout Bulan Ini</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="progressDays">0</div>
+                        <div class="stat-label">Hari Progress</div>
+                    </div>
+                </div>
+
+                <div class="progress-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Progress Insights</div>
+                        </div>
+                        <div id="insightsContainer">
+                            <div class="insight-card insight-info">
+                                <div class="insight-header">
+                                    <i class="fas fa-info-circle"></i>
+                                    <div class="insight-title">Mulai Perjalananmu</div>
+                                </div>
+                                <div>Tambahkan pengukuran tubuh pertama untuk memulai tracking progress.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Quick Actions</div>
+                        </div>
+                        <div style="display: grid; gap: 10px;">
+                            <button class="btn btn-primary" onclick="switchTab('measurements')">
+                                <i class="fas fa-plus"></i> Tambah Measurement
+                            </button>
+                            <button class="btn btn-primary" onclick="switchTab('nutrition')">
+                                <i class="fas fa-utensils"></i> Catat Nutrition
+                            </button>
+                            <button class="btn btn-warning" onclick="switchTab('workout')">
+                                <i class="fas fa-dumbbell"></i> Lihat Workout Plan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Progress Chart</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="progressChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Tab -->
+            <div id="progressTab" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Riwayat Measurements</div>
+                    </div>
+                    <div class="measurement-list" id="measurementList">
+                        <div class="insight-card insight-info">
+                            <div class="insight-header">
+                                <i class="fas fa-info-circle"></i>
+                                <div class="insight-title">Belum Ada Data</div>
+                            </div>
+                            <div>Tambahkan pengukuran tubuh pertama Anda di tab "Measure".</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workout Tab -->
+            <div id="workoutTab" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Jadwal Workout V-Taper</div>
+                    </div>
+                    <div id="workoutSchedule">
+                        <!-- Workout schedule will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Measurements Tab -->
+            <div id="measurementsTab" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Tambah Measurement Baru</div>
+                    </div>
+                    <form id="measurementForm">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Berat (kg)</label>
+                                <input type="number" step="0.1" class="form-input" id="inputWeight" required placeholder="74.5">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Tanggal</label>
+                                <input type="date" class="form-input" id="inputDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Dada (cm)</label>
+                                <input type="number" step="0.1" class="form-input" id="inputChest" required placeholder="100.0">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Pinggang (cm)</label>
+                                <input type="number" step="0.1" class="form-input" id="inputWaist" required placeholder="82.0">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Bahu (cm)</label>
+                                <input type="number" step="0.1" class="form-input" id="inputShoulders" required placeholder="116.5">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Lengan (cm)</label>
+                                <input type="number" step="0.1" class="form-input" id="inputArms" required placeholder="35.5">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="margin-top: 15px;">
+                            <i class="fas fa-save"></i> Simpan Measurement
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Nutrition Tab -->
+            <div id="nutritionTab" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Catatan Nutrition</div>
+                    </div>
+                    <form id="nutritionForm">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Makanan</label>
+                                <input type="text" class="form-input" id="foodItem" required placeholder="e.g., Dada Ayam">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Kalori</label>
+                                <input type="number" class="form-input" id="foodCalories" required placeholder="200">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Protein (g)</label>
+                                <input type="number" step="0.1" class="form-input" id="foodProtein" required placeholder="30">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Karbohidrat (g)</label>
+                                <input type="number" step="0.1" class="form-input" id="foodCarbs" required placeholder="5">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Lemak (g)</label>
+                                <input type="number" step="0.1" class="form-input" id="foodFat" required placeholder="5">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Tanggal</label>
+                                <input type="date" class="form-input" id="nutritionDate" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="margin-top: 15px;">
+                            <i class="fas fa-plus"></i> Tambah Makanan
+                        </button>
+                    </form>
+                    
+                    <div class="nutrition-summary">
+                        <h3 style="margin-bottom: 12px;">Ringkasan Nutrition Hari Ini</h3>
+                        <div class="nutrition-item">
+                            <span>Total Kalori:</span>
+                            <span id="totalCalories">0</span>
+                        </div>
+                        <div class="nutrition-item">
+                            <span>Protein:</span>
+                            <span id="totalProtein">0g</span>
+                        </div>
+                        <div class="nutrition-item">
+                            <span>Karbohidrat:</span>
+                            <span id="totalCarbs">0g</span>
+                        </div>
+                        <div class="nutrition-item">
+                            <span>Lemak:</span>
+                            <span id="totalFat">0g</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Backup Tab -->
+            <div id="backupTab" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Backup & Restore Data</div>
+                    </div>
+                    
+                    <div class="backup-actions">
+                        <button class="btn btn-primary" onclick="exportToExcel()">
+                            <i class="fas fa-file-excel"></i> Export ke Excel
+                        </button>
+                        
+                        <label class="file-label" for="excelFile">
+                            <i class="fas fa-file-import"></i>
+                            <span>Import dari Excel</span>
+                        </label>
+                        <input type="file" id="excelFile" class="file-input" accept=".xlsx, .xls" onchange="importFromExcel(event)">
+                    </div>
+
+                    <div class="backup-info">
+                        <h3 style="margin-bottom: 8px;">Statistik Data</h3>
+                        <div class="data-stats">
+                            <div class="data-stat">
+                                <div class="stat-number" id="measurementsCount">0</div>
+                                <div class="stat-label">Measurements</div>
+                            </div>
+                            <div class="data-stat">
+                                <div class="stat-number" id="nutritionCount">0</div>
+                                <div class="stat-label">Entries Nutrition</div>
+                            </div>
+                            <div class="data-stat">
+                                <div class="stat-number" id="workoutsCount">5</div>
+                                <div class="stat-label">Hari Workout</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="backup-info">
+                        <h3 style="margin-bottom: 8px;">Cara Backup</h3>
+                        <ol style="padding-left: 20px; margin-bottom: 8px; font-size: 13px;">
+                            <li>Klik "Export ke Excel" untuk download file backup</li>
+                            <li>Simpan file Excel ke Google Drive atau komputer</li>
+                            <li>Untuk restore, klik "Import dari Excel" dan pilih file</li>
+                        </ol>
+                    </div>
+
+                    <div class="reset-section">
+                        <button class="btn btn-danger" onclick="resetData()" style="width: 100%;">
+                            <i class="fas fa-trash"></i> Reset Semua Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // User Management System
+        class UserManager {
+            static getCurrentUser() {
+                return localStorage.getItem('currentUser');
+            }
+
+            static setCurrentUser(email) {
+                localStorage.setItem('currentUser', email);
+            }
+
+            static logout() {
+                localStorage.removeItem('currentUser');
+            }
+
+            static getAllUsers() {
+                const users = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key.startsWith('bodyProgress_') && key.includes('_measurements')) {
+                        const email = key.replace('bodyProgress_', '').replace('_measurements', '');
+                        if (email && !users.includes(email)) {
+                            users.push(email);
+                        }
+                    }
+                }
+                return users;
+            }
+
+            static getUserData(email, dataType) {
+                const key = `bodyProgress_${email}_${dataType}`;
+                const data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : null;
+            }
+
+            static saveUserData(email, dataType, data) {
+                const key = `bodyProgress_${email}_${dataType}`;
+                localStorage.setItem(key, JSON.stringify(data));
+            }
+
+            static userExists(email) {
+                return this.getUserData(email, 'user') !== null;
+            }
+
+            static createUser(userData) {
+                const { email, name, password } = userData;
+                
+                // Save user profile
+                this.saveUserData(email, 'user', {
+                    name: name,
+                    email: email,
+                    password: password, // In real app, this should be hashed
+                    targetWeight: 70,
+                    targetWaist: 80,
+                    targetShoulders: 120,
+                    createdAt: new Date().toISOString()
+                });
+                
+                // Initialize empty data
+                this.saveUserData(email, 'measurements', []);
+                this.saveUserData(email, 'nutrition', []);
+                this.saveUserData(email, 'workoutLogs', []);
+            }
+
+            static validateUser(email, password) {
+                const user = this.getUserData(email, 'user');
+                return user && user.password === password;
+            }
+        }
+
+        // Body Progress Tracker App
+        class BodyProgressTracker {
+            constructor(email) {
+                this.email = email;
+                this.user = this.loadData('user');
+                this.measurements = this.loadData('measurements');
+                this.nutritionEntries = this.loadData('nutrition');
+                this.workoutLogs = this.loadData('workoutLogs');
+                this.progressChart = null;
+                this.init();
+            }
+
+            loadData(dataType) {
+                return UserManager.getUserData(this.email, dataType) || this.getDefaultData(dataType);
+            }
+
+            saveData(dataType, data) {
+                UserManager.saveUserData(this.email, dataType, data);
+            }
+
+            getDefaultData(dataType) {
+                switch(dataType) {
+                    case 'user':
+                        return {
+                            name: this.email.split('@')[0],
+                            email: this.email,
+                            targetWeight: 70,
+                            targetWaist: 80,
+                            targetShoulders: 120
+                        };
+                    default:
+                        return [];
+                }
+            }
+
+            init() {
+                // Set current date as default
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('inputDate').value = today;
+                document.getElementById('nutritionDate').value = today;
+                
+                // Update user info
+                document.getElementById('userName').textContent = this.user.name;
+                document.getElementById('currentUserEmail').textContent = this.user.email;
+                
+                // Load initial data
+                this.updateDashboard();
+                this.renderMeasurements();
+                this.renderWorkoutSchedule();
+                this.renderProgressChart();
+                this.updateNutritionSummary();
+                this.updateDataStats();
+            }
+
+            addMeasurement(measurement) {
+                measurement.id = Date.now();
+                this.measurements.push(measurement);
+                this.measurements.sort((a, b) => new Date(a.date) - new Date(b.date));
+                this.saveData('measurements', this.measurements);
+                
+                this.updateDashboard();
+                this.renderMeasurements();
+                this.renderProgressChart();
+                
+                alert('Measurement berhasil disimpan!');
+                document.getElementById('measurementForm').reset();
+                document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
+            }
+
+            addNutritionEntry(entry) {
+                entry.id = Date.now();
+                this.nutritionEntries.push(entry);
+                this.saveData('nutrition', this.nutritionEntries);
+                this.updateNutritionSummary();
+                
+                alert('Data nutrition berhasil disimpan!');
+                document.getElementById('nutritionForm').reset();
+                document.getElementById('nutritionDate').value = new Date().toISOString().split('T')[0];
+            }
+
+            calculateVTaperRatio(measurement) {
+                return measurement.waist > 0 ? (measurement.shoulders / measurement.waist).toFixed(2) : '0';
+            }
+
+            getLatestMeasurement() {
+                return this.measurements.length > 0 ? this.measurements[this.measurements.length - 1] : null;
+            }
+
+            updateDashboard() {
+                const latest = this.getLatestMeasurement();
+                if (latest) {
+                    document.getElementById('currentWeight').textContent = `${latest.weight} kg`;
+                    document.getElementById('vTaperRatio').textContent = this.calculateVTaperRatio(latest);
+                } else {
+                    document.getElementById('currentWeight').textContent = '- kg';
+                    document.getElementById('vTaperRatio').textContent = '-';
+                }
+
+                // Calculate workout days this month
+                const currentMonth = new Date().getMonth();
+                const currentYear = new Date().getFullYear();
+                const workoutsThisMonth = this.workoutLogs.filter(log => {
+                    const logDate = new Date(log.date);
+                    return logDate.getMonth() === currentMonth && logDate.getFullYear() === currentYear;
+                }).length;
+
+                document.getElementById('workoutCount').textContent = workoutsThisMonth;
+                document.getElementById('progressDays').textContent = this.measurements.length > 0 ? 
+                    Math.floor((new Date() - new Date(this.measurements[0].date)) / (1000 * 60 * 60 * 24)) : 0;
+            }
+
+            renderMeasurements() {
+                const container = document.getElementById('measurementList');
+                
+                if (this.measurements.length === 0) {
+                    container.innerHTML = `
+                        <div class="insight-card insight-info">
+                            <div class="insight-header">
+                                <i class="fas fa-info-circle"></i>
+                                <div class="insight-title">Belum Ada Data</div>
+                            </div>
+                            <div>Tambahkan pengukuran tubuh pertama Anda di tab "Measure".</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = '';
+                this.measurements.slice().reverse().forEach(measurement => {
+                    const item = document.createElement('div');
+                    item.className = 'measurement-item';
+                    item.innerHTML = `
+                        <div class="measurement-date">
+                            ${new Date(measurement.date).toLocaleDateString('id-ID')}
+                        </div>
+                        <div class="measurement-values">
+                            <div class="measurement-value">
+                                <div class="value-number">${measurement.weight}kg</div>
+                                <div class="value-label">Berat</div>
+                            </div>
+                            <div class="measurement-value">
+                                <div class="value-number">${measurement.waist}cm</div>
+                                <div class="value-label">Pinggang</div>
+                            </div>
+                            <div class="measurement-value">
+                                <div class="value-number">${this.calculateVTaperRatio(measurement)}</div>
+                                <div class="value-label">V-Taper</div>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(item);
+                });
+            }
+
+            renderWorkoutSchedule() {
+                const container = document.getElementById('workoutSchedule');
+                
+                const workoutSchedule = [
+                    {
+                        day: "Hari 1: Dada & Triceps",
+                        exercises: [
+                            { name: "Bench Press", sets: "4", reps: "8-12", rest: "60-90s" },
+                            { name: "Incline Dumbbell Press", sets: "3", reps: "10-12", rest: "60s" },
+                            { name: "Cable Crossover", sets: "3", reps: "12-15", rest: "45s" },
+                            { name: "Tricep Pushdown", sets: "3", reps: "12-15", rest: "45s" }
+                        ]
+                    },
+                    {
+                        day: "Hari 2: Punggung & Biceps",
+                        exercises: [
+                            { name: "Pull-ups", sets: "4", reps: "Failure", rest: "60s" },
+                            { name: "Bent Over Row", sets: "4", reps: "8-12", rest: "60-90s" },
+                            { name: "Lat Pulldown", sets: "3", reps: "10-12", rest: "60s" },
+                            { name: "Barbell Curl", sets: "3", reps: "10-12", rest: "60s" }
+                        ]
+                    },
+                    {
+                        day: "Hari 3: Bahu & Abs",
+                        exercises: [
+                            { name: "Overhead Press", sets: "4", reps: "8-12", rest: "60-90s" },
+                            { name: "Lateral Raise", sets: "3", reps: "12-15", rest: "45s" },
+                            { name: "Front Raise", sets: "3", reps: "12-15", rest: "45s" },
+                            { name: "Hanging Leg Raise", sets: "3", reps: "12-15", rest: "45s" }
+                        ]
+                    },
+                    {
+                        day: "Hari 4: Kaki",
+                        exercises: [
+                            { name: "Squat", sets: "4", reps: "8-12", rest: "90s" },
+                            { name: "Romanian Deadlift", sets: "3", reps: "10-12", rest: "60s" },
+                            { name: "Leg Press", sets: "3", reps: "12-15", rest: "60s" },
+                            { name: "Calf Raise", sets: "4", reps: "15-20", rest: "30s" }
+                        ]
+                    },
+                    {
+                        day: "Hari 5: Istirahat",
+                        exercises: [
+                            { name: "Recovery Aktif", sets: "-", reps: "-", rest: "-" },
+                            { name: "Cardio Ringan", sets: "-", reps: "20-30 menit", rest: "-" },
+                            { name: "Stretching", sets: "-", reps: "10-15 menit", rest: "-" }
+                        ]
+                    }
+                ];
+
+                container.innerHTML = '';
+                
+                workoutSchedule.forEach(day => {
+                    const dayElement = document.createElement('div');
+                    dayElement.className = 'workout-day';
+                    
+                    let exercisesHTML = '';
+                    day.exercises.forEach(exercise => {
+                        exercisesHTML += `
+                            <div class="exercise">
+                                <div class="exercise-name">${exercise.name}</div>
+                                <div class="exercise-details">
+                                    <div class="exercise-detail">
+                                        <i class="fas fa-layer-group"></i>
+                                        <span>Sets: ${exercise.sets}</span>
+                                    </div>
+                                    <div class="exercise-detail">
+                                        <i class="fas fa-redo"></i>
+                                        <span>Reps: ${exercise.reps}</span>
+                                    </div>
+                                    <div class="exercise-detail">
+                                        <i class="fas fa-clock"></i>
+                                        <span>Rest: ${exercise.rest}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    dayElement.innerHTML = `
+                        <div class="workout-header">
+                            <span>${day.day}</span>
+                        </div>
+                        <div class="workout-body">
+                            ${exercisesHTML}
+                        </div>
+                    `;
+                    
+                    container.appendChild(dayElement);
+                });
+            }
+
+            renderProgressChart() {
+                const ctx = document.getElementById('progressChart').getContext('2d');
+                
+                if (this.progressChart) {
+                    this.progressChart.destroy();
+                }
+
+                if (this.measurements.length === 0) {
+                    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                    ctx.fillStyle = '#666';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Tidak ada data untuk ditampilkan', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                    return;
+                }
+                
+                const labels = this.measurements.map(m => 
+                    new Date(m.date).toLocaleDateString('id-ID', { month: 'short', day: 'numeric' })
+                );
+                
+                const weightData = this.measurements.map(m => m.weight);
+                const waistData = this.measurements.map(m => m.waist);
+                
+                this.progressChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Berat (kg)',
+                                data: weightData,
+                                borderColor: '#2563EB',
+                                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                                tension: 0.3,
+                                yAxisID: 'y'
+                            },
+                            {
+                                label: 'Pinggang (cm)',
+                                data: waistData,
+                                borderColor: '#EF4444',
+                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                tension: 0.3,
+                                yAxisID: 'y1'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left'
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                grid: {
+                                    drawOnChartArea: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateNutritionSummary() {
+                const today = new Date().toISOString().split('T')[0];
+                const todayEntries = this.nutritionEntries.filter(entry => entry.date === today);
+                
+                const totalCalories = todayEntries.reduce((sum, entry) => sum + entry.calories, 0);
+                const totalProtein = todayEntries.reduce((sum, entry) => sum + entry.protein, 0);
+                const totalCarbs = todayEntries.reduce((sum, entry) => sum + entry.carbs, 0);
+                const totalFat = todayEntries.reduce((sum, entry) => sum + entry.fat, 0);
+                
+                document.getElementById('totalCalories').textContent = totalCalories;
+                document.getElementById('totalProtein').textContent = `${totalProtein.toFixed(1)}g`;
+                document.getElementById('totalCarbs').textContent = `${totalCarbs.toFixed(1)}g`;
+                document.getElementById('totalFat').textContent = `${totalFat.toFixed(1)}g`;
+            }
+
+            updateDataStats() {
+                document.getElementById('measurementsCount').textContent = this.measurements.length;
+                document.getElementById('nutritionCount').textContent = this.nutritionEntries.length;
+            }
+
+            exportToExcel() {
+                try {
+                    const wb = XLSX.utils.book_new();
+                    
+                    // Measurements sheet
+                    const measurementsData = this.measurements.map(m => ({
+                        'Tanggal': m.date,
+                        'Berat (kg)': m.weight,
+                        'Dada (cm)': m.chest,
+                        'Pinggang (cm)': m.waist,
+                        'Bahu (cm)': m.shoulders,
+                        'Lengan (cm)': m.arms,
+                        'Rasio V-Taper': this.calculateVTaperRatio(m)
+                    }));
+                    
+                    const wsMeasurements = XLSX.utils.json_to_sheet(measurementsData);
+                    XLSX.utils.book_append_sheet(wb, wsMeasurements, 'Measurements');
+                    
+                    // Nutrition sheet
+                    const nutritionData = this.nutritionEntries.map(n => ({
+                        'Tanggal': n.date,
+                        'Makanan': n.food,
+                        'Kalori': n.calories,
+                        'Protein (g)': n.protein,
+                        'Karbohidrat (g)': n.carbs,
+                        'Lemak (g)': n.fat
+                    }));
+                    
+                    const wsNutrition = XLSX.utils.json_to_sheet(nutritionData);
+                    XLSX.utils.book_append_sheet(wb, wsNutrition, 'Nutrition');
+                    
+                    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+                    const filename = `BodyProgress_${this.user.name}_${timestamp}.xlsx`;
+                    
+                    XLSX.writeFile(wb, filename);
+                    
+                    alert(`Data berhasil diexport ke: ${filename}`);
+                } catch (error) {
+                    console.error('Export error:', error);
+                    alert('Error saat export data. Coba lagi.');
+                }
+            }
+
+            importFromExcel(file) {
+                const reader = new FileReader();
+                
+                reader.onload = (e) => {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        
+                        let importedCount = 0;
+                        
+                        if (workbook.Sheets['Measurements']) {
+                            const measurementsData = XLSX.utils.sheet_to_json(workbook.Sheets['Measurements']);
+                            if (measurementsData.length > 0 && confirm(`Import ${measurementsData.length} data measurements?`)) {
+                                this.measurements = measurementsData.map((m, index) => ({
+                                    id: Date.now() + index,
+                                    date: m['Tanggal'],
+                                    weight: m['Berat (kg)'],
+                                    chest: m['Dada (cm)'],
+                                    waist: m['Pinggang (cm)'],
+                                    shoulders: m['Bahu (cm)'],
+                                    arms: m['Lengan (cm)']
+                                }));
+                                importedCount += measurementsData.length;
+                            }
+                        }
+                        
+                        if (workbook.Sheets['Nutrition']) {
+                            const nutritionData = XLSX.utils.sheet_to_json(workbook.Sheets['Nutrition']);
+                            if (nutritionData.length > 0 && confirm(`Import ${nutritionData.length} data nutrition?`)) {
+                                this.nutritionEntries = nutritionData.map((n, index) => ({
+                                    id: Date.now() + index + 1000,
+                                    date: n['Tanggal'],
+                                    food: n['Makanan'],
+                                    calories: n['Kalori'],
+                                    protein: n['Protein (g)'],
+                                    carbs: n['Karbohidrat (g)'],
+                                    fat: n['Lemak (g)']
+                                }));
+                                importedCount += nutritionData.length;
+                            }
+                        }
+                        
+                        this.saveData('measurements', this.measurements);
+                        this.saveData('nutrition', this.nutritionEntries);
+                        this.init();
+                        
+                        alert(`Import berhasil! ${importedCount} data diimport.`);
+                        
+                    } catch (error) {
+                        console.error('Import error:', error);
+                        alert('Error saat import. Pastikan file formatnya benar.');
+                    }
+                };
+                
+                reader.readAsArrayBuffer(file);
+            }
+
+            resetData() {
+                if (confirm('Hapus semua data? Tindakan ini tidak dapat dibatalkan.')) {
+                    this.measurements = [];
+                    this.nutritionEntries = [];
+                    this.workoutLogs = [];
+                    
+                    this.saveData('measurements', this.measurements);
+                    this.saveData('nutrition', this.nutritionEntries);
+                    this.saveData('workoutLogs', this.workoutLogs);
+                    
+                    this.init();
+                    alert('Semua data telah direset!');
+                }
+            }
+        }
+
+        // Global App Instance
+        let app;
+
+        // Auth Functions
+        function switchAuthTab(tab) {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.auth-tab').forEach(t => {
+                if (t.textContent.toLowerCase().includes(tab)) {
+                    t.classList.add('active');
+                }
+            });
+
+            document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
+            document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
+        }
+
+        function renderUserList() {
+            const userList = document.getElementById('userList');
+            const users = UserManager.getAllUsers();
+            
+            if (users.length === 0) {
+                userList.innerHTML = '<p style="text-align: center; color: var(--gray-600); font-size: 13px;">Belum ada akun yang tersedia</p>';
+                return;
+            }
+            
+            let usersHTML = '';
+            users.forEach(email => {
+                const user = UserManager.getUserData(email, 'user');
+                usersHTML += `
+                    <div class="user-item" onclick="quickLogin('${email}')">
+                        <div class="user-email">${user.name}</div>
+                        <div class="user-data">${email}</div>
+                    </div>
+                `;
+            });
+            
+            userList.innerHTML = `
+                <h3 style="margin-bottom: 12px; text-align: center; font-size: 14px;">Akun yang Tersedia</h3>
+                ${usersHTML}
+            `;
+        }
+
+        function quickLogin(email) {
+            document.getElementById('loginEmail').value = email;
+            document.getElementById('loginPassword').value = 'password';
+            login();
+        }
+
+        function register() {
+            const name = document.getElementById('registerName').value.trim();
+            const email = document.getElementById('registerEmail').value.trim();
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('registerConfirmPassword').value;
+
+            if (!name || !email || !password) {
+                alert('Semua field harus diisi');
+                return;
+            }
+
+            if (password.length < 6) {
+                alert('Password minimal 6 karakter');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                alert('Password dan konfirmasi password tidak cocok');
+                return;
+            }
+
+            if (UserManager.userExists(email)) {
+                alert('Email sudah terdaftar. Silakan login.');
+                switchAuthTab('login');
+                return;
+            }
+
+            UserManager.createUser({ name, email, password });
+            alert('Akun berhasil dibuat! Silakan login.');
+            switchAuthTab('login');
+            document.getElementById('loginEmail').value = email;
+        }
+
+        function login() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            if (!email || !password) {
+                alert('Email dan password harus diisi');
+                return;
+            }
+
+            if (!UserManager.validateUser(email, password)) {
+                alert('Email atau password salah');
+                return;
+            }
+
+            UserManager.setCurrentUser(email);
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('appContainer').classList.remove('hidden');
+            app = new BodyProgressTracker(email);
+        }
+
+        function logout() {
+            if (confirm('Apakah Anda yakin ingin logout?')) {
+                UserManager.logout();
+                document.getElementById('appContainer').classList.add('hidden');
+                document.getElementById('authScreen').classList.remove('hidden');
+                document.getElementById('loginEmail').value = '';
+                document.getElementById('loginPassword').value = '';
+                renderUserList();
+                app = null;
+            }
+        }
+
+        // App Functions
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+            
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function exportToExcel() {
+            if (app) app.exportToExcel();
+        }
+
+        function importFromExcel(event) {
+            const file = event.target.files[0];
+            if (file && app) app.importFromExcel(file);
+            event.target.value = '';
+        }
+
+        function resetData() {
+            if (app) app.resetData();
+        }
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', function() {
+            renderUserList();
+            
+            const currentUser = UserManager.getCurrentUser();
+            if (currentUser) {
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('appContainer').classList.remove('hidden');
+                app = new BodyProgressTracker(currentUser);
+            }
+            
+            // Form handlers
+            document.getElementById('measurementForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (app) {
+                    const measurement = {
+                        date: document.getElementById('inputDate').value,
+                        weight: parseFloat(document.getElementById('inputWeight').value) || 0,
+                        chest: parseFloat(document.getElementById('inputChest').value) || 0,
+                        waist: parseFloat(document.getElementById('inputWaist').value) || 0,
+                        shoulders: parseFloat(document.getElementById('inputShoulders').value) || 0,
+                        arms: parseFloat(document.getElementById('inputArms').value) || 0
+                    };
+                    app.addMeasurement(measurement);
+                }
+            });
+            
+            document.getElementById('nutritionForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (app) {
+                    const nutritionEntry = {
+                        date: document.getElementById('nutritionDate').value,
+                        food: document.getElementById('foodItem').value,
+                        calories: parseInt(document.getElementById('foodCalories').value) || 0,
+                        protein: parseFloat(document.getElementById('foodProtein').value) || 0,
+                        carbs: parseFloat(document.getElementById('foodCarbs').value) || 0,
+                        fat: parseFloat(document.getElementById('foodFat').value) || 0
+                    };
+                    app.addNutritionEntry(nutritionEntry);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
